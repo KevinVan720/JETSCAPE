@@ -78,8 +78,8 @@ void Brick::InitializeHydro(Parameter parameter_list) {
 
 
 void Brick::EvolveHydro() {
-  VERBOSE(8);
-  VERBOSE(2) << "size of sd = " << ini->GetEntropyDensityDistribution().size();
+  //VERBOSE(2) << "brick hydro evolve.";
+  //VERBOSE(2) << "size of sd = " << ini->GetEntropyDensityDistribution().size();
   hydro_status = FINISHED;
 }
 

@@ -29,6 +29,7 @@ class PGun: public HardProcess {
     
  private:
     double fixed_pT;
+    int pid;
     int flag_useHybridHad;
 
  public:

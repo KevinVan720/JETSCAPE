@@ -61,6 +61,8 @@ namespace Jetscape {
       vector<shared_ptr<Hadron>> GetHadrons(){ return hadrons;}
 
       vector<fjcore::PseudoJet>  GetHadronsForFastJet();
+
+      double GetSigmaGen() {return currentsigmaGen;}
   
     private:
 
@@ -76,6 +78,10 @@ namespace Jetscape {
   
       int currentEvent;
       int currentShower;
+
+      double currentsigmaGen;
+      int hq_current_mother_id;
+      int hq_current_channel;
   
       shared_ptr<PartonShower> pShower;
       vector<shared_ptr<PartonShower>> pShowers;

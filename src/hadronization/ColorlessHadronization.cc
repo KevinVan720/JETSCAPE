@@ -84,6 +84,45 @@ void ColorlessHadronization::Init()
 
     // Don't let any hadron decay
     //pythia.readString("HadronLevel:Decay = off");
+    pythia.readString("HadronLevel:all = on");
+    pythia.readString("411:mayDecay = false");
+    pythia.readString("421:mayDecay = false");
+    pythia.readString("413:mayDecay = false");
+    pythia.readString("423:mayDecay = false");
+    pythia.readString("431:mayDecay = false");
+    pythia.readString("433:mayDecay = false");
+    pythia.readString("4122:mayDecay = false");
+    pythia.readString("4222:mayDecay = false");
+    pythia.readString("4112:mayDecay = false");
+    pythia.readString("4212:mayDecay = false");
+    pythia.readString("4224:mayDecay = false");
+    pythia.readString("4114:mayDecay = false");
+    pythia.readString("4214:mayDecay = false");
+    pythia.readString("4232:mayDecay = false");
+    pythia.readString("4132:mayDecay = false");
+    pythia.readString("4324:mayDecay = false");
+    pythia.readString("4314:mayDecay = false");
+    pythia.readString("4332:mayDecay = false");
+    pythia.readString("4334:mayDecay = false");
+    pythia.readString("511:mayDecay = false");
+    pythia.readString("521:mayDecay = false");
+    pythia.readString("513:mayDecay = false");
+    pythia.readString("523:mayDecay = false");
+    pythia.readString("531:mayDecay = false");
+    pythia.readString("533:mayDecay = false");
+    pythia.readString("5122:mayDecay = false");
+    pythia.readString("5222:mayDecay = false");
+    pythia.readString("5112:mayDecay = false");
+    pythia.readString("5212:mayDecay = false");
+    pythia.readString("5224:mayDecay = false");
+    pythia.readString("5114:mayDecay = false");
+    pythia.readString("5214:mayDecay = false");
+    pythia.readString("5232:mayDecay = false");
+    pythia.readString("5132:mayDecay = false");
+    pythia.readString("5324:mayDecay = false");
+    pythia.readString("5314:mayDecay = false");
+    pythia.readString("5332:mayDecay = false");
+    pythia.readString("5334:mayDecay = false");
 
     // And initialize
     pythia.init();

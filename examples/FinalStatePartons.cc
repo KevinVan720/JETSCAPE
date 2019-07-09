@@ -52,33 +52,25 @@ int main(int argc, char** argv)
   auto reader=make_shared<JetScapeReaderAscii>("test_out.dat");
   std::ofstream dist_output ("JetscapeFinalStatePartons.txt"); //Format is SN, PID, E, Px, Py, Pz, Eta, Phi
   
+  JSINFO <<"reader ready";
+
   while (!reader->Finished())
     {
       reader->Next();
-      
+      double E=0.;
+      int count=0;
       // cout<<"Analyze current event: "<<reader->GetCurrentEvent()<<endl;
       auto mShowers=reader->GetPartonShowers();     
-
-      dist_output<<"Event "<< reader->GetCurrentEvent()+1<<endl;
-      for (int i=0;i<mShowers.size();i++)
-	{
-	  //cout<<" Analyze parton shower: "<<i<<endl;
-	  // Let's create a file
-	  for ( int ipart = 0; ipart< mShowers[i]->GetFinalPartons().size(); ++ipart){
-	    Parton p = *mShowers[i]->GetFinalPartons().at(ipart);
-            if(abs(p.pid())!=5) continue;
-
-	    dist_output << ipart   << "\t"
-			<< p.pid() << "\t"
-			<< p.pstat() << "\t"
-			<< p.e()   << "\t"
-			<< p.px()  << "\t" 
-			<< p.py()  << "\t" 
-			<< p.pz()  << "\t"
-			<< p.eta()<<  "\t"<< p.phi() << endl;
-	  }
-	}
-
+			for (int i = 0; i < mShowers.size(); i++)
+			{
+				std::vector<fjcore::PseudoJet> temp = mShowers[i]->GetFinalPartonsForFastJet();
+				for (int j = 0; j < temp.size(); j++)
+				{
+					E+= temp[j].e();
+          count++;
+				}
+			}
+     JSINFO<<"avergae E: "<<E/count;
     }
   
   reader->Close(); 

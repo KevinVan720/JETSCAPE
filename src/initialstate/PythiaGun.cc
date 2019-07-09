@@ -53,14 +53,14 @@ void PythiaGun::InitTask()
 
   // Standard settings
   readString("HardQCD:all = on"); // will repeat this line in the xml for demonstration
-  readString("HardQCD:gg2ccbar = on"); // switch on heavy quark channel
-  readString("HardQCD:qqbar2ccbar = on");
+  //readString("HardQCD:gg2ccbar = on"); // switch on heavy quark channel
+  //readString("HardQCD:qqbar2ccbar = on");
   readString("HadronLevel:Decay = off");
   readString("HadronLevel:all = off");
   readString("PartonLevel:ISR = on");
   readString("PartonLevel:MPI = on");
   //readString("PartonLevel:FSR = on");
-  readString("PromptPhoton:all=on");
+  //readString("PromptPhoton:all=on");
   readString("WeakSingleBoson:all=off");
   readString("WeakDoubleBoson:all=off");
 
@@ -244,6 +244,7 @@ void PythiaGun::Exec()
   
   if (!ini) {
       JSWARN << "No initial state module, setting the starting location to 0. Make sure to add e.g. trento before PythiaGun.";
+
   } else {
     auto num_bin_coll = ini->GetNumOfBinaryCollisions();
     if ( num_bin_coll.size()==0 ){

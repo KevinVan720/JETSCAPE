@@ -15,188 +15,222 @@
 
 #include "JetScapeReader.h"
 
-namespace Jetscape {
+namespace Jetscape
+{
 
-template<class T>
+template <class T>
 JetScapeReader<T>::JetScapeReader()
 {
   VERBOSE(8);
-  currentEvent=-1;
+  currentEvent = -1;
 }
 
-template<class T>
+template <class T>
 JetScapeReader<T>::~JetScapeReader()
 {
   VERBOSE(8);
 }
 
-template<class T>
+template <class T>
 void JetScapeReader<T>::Clear()
 {
-  nodeVec.clear();edgeVec.clear();
+  nodeVec.clear();
+  edgeVec.clear();
   //pShower->clear();//pShower=nullptr; //check ...
   pShowers.clear();
   hadrons.clear();
 }
 
-template<class T>
+template <class T>
 void JetScapeReader<T>::AddNode(string s)
 {
-  string token; 
+  string token;
   //int counter=0;
   strT.set(s);
 
   vector<string> vS;
-  
-  while (!strT.done())
-    {
-      token = strT.next();
-      if(token.compare("V") != 0)
-      	vS.push_back(token);
-    }
 
-  nodeVec.push_back(pShower->new_vertex(make_shared<Vertex>(stod(vS[1]),stod(vS[2]),stod(vS[3]),stod(vS[4]))));
+  while (!strT.done())
+  {
+    token = strT.next();
+    if (token.compare("V") != 0)
+      vS.push_back(token);
+  }
+
+  nodeVec.push_back(pShower->new_vertex(make_shared<Vertex>(stod(vS[1]), stod(vS[2]), stod(vS[3]), stod(vS[4]))));
 }
 
-template<class T>
+template <class T>
 void JetScapeReader<T>::AddEdge(string s)
 {
-  if (nodeVec.size()>1)
+  if (nodeVec.size() > 1)
+  {
+    string token;
+    //int counter=0;
+    strT.set(s);
+
+    vector<string> vS;
+
+    while (!strT.done())
     {
-      string token; 
-      //int counter=0;
-      strT.set(s);
-      
-      vector<string> vS;
-      
-      while (!strT.done())
-	{
-	  token = strT.next();
-	  if(token.compare("P") != 0)
-	    vS.push_back(token);
-	}      
-      
-      pShower->new_parton(nodeVec[stoi(vS[0])],nodeVec[stoi(vS[1])],make_shared<Parton>(stoi(vS[2]),stoi(vS[3]),stoi(vS[4]),stod(vS[5]),stod(vS[6]),stod(vS[7]),stod(vS[8]))); // use different constructor wit true spatial posiiton ...
+      token = strT.next();
+      if (token.compare("P") != 0)
+        vS.push_back(token);
     }
+
+    pShower->new_parton(nodeVec[stoi(vS[0])], nodeVec[stoi(vS[1])], make_shared<Parton>(stoi(vS[2]), stoi(vS[3]), stoi(vS[4]), stod(vS[5]), stod(vS[6]), stod(vS[7]), stod(vS[8]))); // use different constructor wit true spatial posiiton ...
+    int partonid = stoi(vS[3]);
+    if (abs(partonid) == 4 || abs(partonid) == 5)
+    {
+      shared_ptr<Parton> hq = pShower->GetPartonAt(pShower->GetNumberOfPartons() - 1);
+      hq->set_user_info(new HQInfoBase(hq_current_channel, hq_current_mother_id));
+    }
+  }
   else
-    JSWARN<<"Node vector not filled, can not add edges/partons!";
+    JSWARN << "Node vector not filled, can not add edges/partons!";
 }
 
-template<class T>
+template <class T>
 void JetScapeReader<T>::AddHadron(string s)
 {
-	string token;
-        strT.set(s);
+  string token;
+  strT.set(s);
 
-	vector<string> vS;
-        double x[4];
-        x[0]=x[1]=x[2]=x[3]=0.0;
-        while (!strT.done())
-        {
-          token = strT.next();
-	  if(token.compare("H") != 0)
-            vS.push_back(token);
-        }
-        hadrons.push_back(make_shared<Hadron>(stoi(vS[1]),stoi(vS[2]),stoi(vS[3]),stod(vS[4]),stod(vS[5]),stod(vS[6]),stod(vS[7]),x));
-
+  vector<string> vS;
+  double x[4];
+  x[0] = x[1] = x[2] = x[3] = 0.0;
+  while (!strT.done())
+  {
+    token = strT.next();
+    if (token.compare("H") != 0)
+      vS.push_back(token);
+  }
+  hadrons.push_back(make_shared<Hadron>(stoi(vS[1]), stoi(vS[2]), stoi(vS[3]), stod(vS[4]), stod(vS[5]), stod(vS[6]), stod(vS[7]), x));
 }
 
-template<class T>
+template <class T>
 void JetScapeReader<T>::Next()
 {
-  if (currentEvent>0)
+  if (currentEvent > 0)
     Clear();
-  
+
   //ReadEvent(currentPos);
   string line;
-  string token; 
+  string token;
 
-  JSINFO<<"Current Event = "<<currentEvent;
+  //JSINFO << "Current Event = " << currentEvent;
 
   pShowers.push_back(make_shared<PartonShower>());
-  pShower=pShowers[0];
-  currentShower=1;
-  
-  int nodeZeroCounter=0;
-  
-  while (getline(inFile,line))
+  pShower = pShowers[0];
+  currentShower = 1;
+
+  int nodeZeroCounter = 0;
+
+  while (getline(inFile, line))
+  {
+    strT.set(line);
+
+    if (strT.isCommentEntry())
+    if ( strT.isCommentEntry()) 
+      {
+        auto tokens=strT.split();
+        if (tokens[1]=="sigmaGen")
+        {
+          currentsigmaGen=stod(tokens[2]);
+        }
+        else if (tokens[1]=="hq")
+        {
+          hq_current_mother_id = stod(tokens[3]);
+          hq_current_channel = stod(tokens[5]);
+        }
+        //JSINFO<<"Current Comment = "<< tokens[1];
+        continue;   
+      }
+
+    if (strT.isEventEntry())
     {
-      strT.set(line);
-
-      if ( strT.isCommentEntry()) continue;
-      
-      if (strT.isEventEntry()) {
-	int newEvent=stoi(strT.next());		      
-	if (currentEvent!=newEvent && currentEvent>-1) {
-	  currentEvent++;
-	  break;
-	}	
-	currentEvent=newEvent;
-	continue;
+      int newEvent = stoi(strT.next());
+      if (currentEvent != newEvent && currentEvent > -1)
+      {
+        currentEvent++;
+        break;
       }
-
-      // not an event header -- done?
-      if ( !strT.isGraphEntry()) continue;
-      
-      // node?
-      if(strT.isNodeEntry()){
-	// catch starting node
-	if (strT.isNodeZero()) {
-	  nodeZeroCounter++;
-	  if (nodeZeroCounter>currentShower) {
-	    nodeVec.clear();edgeVec.clear();
-	    pShowers.push_back(make_shared<PartonShower>());
-	    pShower=pShowers.back();
-	    currentShower++;
-	  }
-	}
-	AddNode(line);
-	continue;
-      }
-
-      // edge?
-      if (strT.isEdgeEntry()) {
-	AddEdge(line);
-	continue;
-      }
-      
-      // rest is list entry == hadron entry
-      // Some questionable nomenclature here - identifying all that begins with "[" as "GraphEntry"
-      // oh well
-      AddHadron(line);
+      currentEvent = newEvent;
+      continue;
     }
-  
+
+    // not an event header -- done?
+    if (!strT.isGraphEntry())
+      continue;
+
+    // node?
+    if (strT.isNodeEntry())
+    {
+      // catch starting node
+      if (strT.isNodeZero())
+      {
+        nodeZeroCounter++;
+        if (nodeZeroCounter > currentShower)
+        {
+          nodeVec.clear();
+          edgeVec.clear();
+          pShowers.push_back(make_shared<PartonShower>());
+          pShower = pShowers.back();
+          currentShower++;
+        }
+      }
+      AddNode(line);
+      continue;
+    }
+
+    // edge?
+    if (strT.isEdgeEntry())
+    {
+      AddEdge(line);
+      continue;
+    }
+
+    // rest is list entry == hadron entry
+    // Some questionable nomenclature here - identifying all that begins with "[" as "GraphEntry"
+    // oh well
+    AddHadron(line);
+  }
+
   if (Finished())
-    currentEvent++;  
-  
+    currentEvent++;
 }
 
-template<class T>
-vector<fjcore::PseudoJet>  JetScapeReader<T>::GetHadronsForFastJet(){
-  vector<fjcore::PseudoJet> forFJ;  
+template <class T>
+vector<fjcore::PseudoJet> JetScapeReader<T>::GetHadronsForFastJet()
+{
+  vector<fjcore::PseudoJet> forFJ;
 
-  for ( auto& h : hadrons) {
-    forFJ.push_back( h->GetPseudoJet());
+  for (auto &h : hadrons)
+  {
+    forFJ.push_back(h->GetPseudoJet());
+    forFJ[forFJ.size()-1].set_user_index(h->pid());
   }
 
   return forFJ;
-} 
+}
 
-
-template<class T>
+template <class T>
 void JetScapeReader<T>::Init()
 {
-  VERBOSE(8)<<"Open Input File = "<<file_name_in;
-  JSINFO<<"Open Input File = "<<file_name_in;
-  
-  inFile.open(file_name_in.c_str());
-  
-  if (!inFile.good())
-    { JSWARN<<"Corrupt input file!"; exit(-1);}
-  else
-    JSINFO<<"File opened";
+  VERBOSE(8) << "Open Input File = " << file_name_in;
+  JSINFO << "Open Input File = " << file_name_in;
 
-  currentEvent=0;
+  inFile.open(file_name_in.c_str());
+
+  if (!inFile.good())
+  {
+    JSWARN << "Corrupt input file!";
+    exit(-1);
+  }
+  else
+    JSINFO << "File opened";
+
+  currentEvent = 0;
 }
 
 template class JetScapeReader<ifstream>;

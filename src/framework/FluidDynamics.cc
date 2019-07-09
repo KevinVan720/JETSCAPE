@@ -79,11 +79,12 @@ void FluidDynamics::Init() {
 
 void FluidDynamics::Exec() {
     JSINFO << "Run Hydro : " << GetId() << " ...";
+
     VERBOSE(8) << "Current Event #" << GetCurrentEvent();
 
     if (ini) {
-        VERBOSE(3) << "length of entropy density vector="
-                   << ini->GetEntropyDensityDistribution().size();
+       VERBOSE(3) << "length of entropy density vector="
+                  << ini->GetEntropyDensityDistribution().size();
     }
 
     EvolveHydro();  

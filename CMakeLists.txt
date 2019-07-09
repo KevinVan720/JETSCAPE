@@ -371,6 +371,15 @@ target_link_libraries(LBT_brickTest JetScape )
 add_executable(HQJetTest ./examples/HQJetTest.cc)
 target_link_libraries(HQJetTest JetScape )
 
+add_executable(HQJetReader ./examples/HQJetReader.cc)
+target_link_libraries(HQJetReader JetScape )
+
+add_executable(HQHadronJetReader ./examples/HQHadronJetReader.cc)
+target_link_libraries(HQHadronJetReader JetScape )
+
+add_executable(LidoJetTest ./examples/LidoJetTest.cc)
+target_link_libraries(LidoJetTest JetScape )
+
 if(${HDF5_FOUND})
   add_executable(hydroFileTest ./examples/hydroFileTest.cc)
   target_link_libraries(hydroFileTest JetScape ${_hdf5_libs})

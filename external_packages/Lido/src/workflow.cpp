@@ -183,6 +183,7 @@ int update_particle_momentum_Lido(
 	fourvec pnew;
 	Ito_update(pIn.pid, dt, pIn.mass, temp, v3cell, pIn.p, pnew);
 	pIn.p = pnew;
+	//LOG_INFO << "diff dt = "<< dt << " " << pIn.x << " " << pIn.p;
 
 	// Apply large angle scattering, and diffusion induced radiation
 	auto p_cell = pIn.p.boost_to(v3cell[0], v3cell[1], v3cell[2]);

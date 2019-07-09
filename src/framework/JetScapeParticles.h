@@ -79,6 +79,17 @@ using std::weak_ptr;
 namespace Jetscape {
 
   class PartonShower;
+
+  class HQInfoBase : public fjcore::PseudoJet::UserInfoBase
+  {
+  public:
+
+    HQInfoBase(int hq_channel, int hq_mother_id) : hq_channel_(hq_channel), hq_mother_id_(hq_mother_id) {};
+    int hq_channel() const { return hq_channel_; }
+    int hq_mother_id() const { return hq_mother_id_; }
+    int hq_channel_;
+    int hq_mother_id_;
+  };
   
   /**************************************************************************************************/
   //  BASE CLASS

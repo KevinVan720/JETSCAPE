@@ -65,14 +65,14 @@ std::string to_string_with_precision(const T a_value, const int n = 6)
   return out.str();
 }
 
-void run_HQ_test(double pTmin, double pTmax, int events=3000)
+void run_HQ_test(double pTmin, double pTmax, int events=30)
 {
   clock_t t; t = clock();
   time_t start, end; time(&start);
     
   // DEBUG=true by default and REMARK=false
   // can be also set also via XML file (at least partially)
-  JetScapeLogger::Instance()->SetInfo(false);
+  JetScapeLogger::Instance()->SetInfo(true);
   JetScapeLogger::Instance()->SetDebug(false);
   JetScapeLogger::Instance()->SetRemark(false);
   //SetVerboseLevel (9 a lot of additional debug output ...)
