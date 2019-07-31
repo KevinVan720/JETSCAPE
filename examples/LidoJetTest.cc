@@ -40,6 +40,8 @@
 #include "Brick.h"
 #include "Lido.h"
 #include "GubserHydro.h"
+#include "HydroFromFile.h"
+#include "MusicWrapper.h"
 #include "PGun.h"
 #include "PythiaGun.h"
 #include "PartonPrinter.h"
@@ -47,6 +49,9 @@
 #include "Hadronization.h"
 #include "ColoredHadronization.h"
 #include "ColorlessHadronization.h"
+#include "NullPreDynamics.h"
+//#include "FreestreamMilneWrapper.h"
+#include "iSpectraSamplerWrapper.h"
 
 #include <chrono>
 #include <thread>
@@ -67,7 +72,7 @@ std::string to_string_with_precision(const T a_value, const int n = 6)
   return out.str();
 }
 
-/* 
+ 
 void run_HQ_test(double pTmin, double pTmax, int events=30)
 {
   clock_t t; t = clock();
@@ -98,22 +103,33 @@ void run_HQ_test(double pTmin, double pTmax, int events=30)
   auto jetscape = make_shared<JetScape>("./jetscape_init.xml",events);
   jetscape->SetId("primary");
   jetscape->SetReuseHydro (true);
-  jetscape->SetNReuseHydro (1000);
+  jetscape->SetNReuseHydro (events);
 
   // Initial conditions and hydro
-  //auto trento = make_shared<TrentoInitial>();
+  auto trento = make_shared<TrentoInitial>();
+  auto null_predynamics = make_shared<NullPreDynamics> ();
+  //auto freestream = make_shared<FreestreamMilneWrapper> ();
   auto pythiaGun= make_shared<PythiaGun> ();
-  auto hydro = make_shared<Brick> ();
-  //jetscape->Add(trento);
+  //auto hydro = make_shared<GubserHydro> ();
+  //auto hydro = make_shared<Brick> ();
+  auto hydro = make_shared<MpiMusic> ();
+  //auto hydro = make_shared<HydroFromFile> ();
+  jetscape->Add(trento);
+  jetscape->Add(null_predynamics);
+  //jetscape->Add(freestream);
   jetscape->Add(pythiaGun);
   jetscape->Add(hydro);
 
+ 
+  // surface sampler
+  //auto iSS = make_shared<iSpectraSamplerWrapper> ();
+  //jetscape->Add(iSS);
 
   // Energy loss
   auto jlossmanager = make_shared<JetEnergyLossManager> ();
   auto jloss = make_shared<JetEnergyLoss> ();
 
-  // auto matter = make_shared<Matter> ();
+  //auto matter = make_shared<Matter> ();
   auto lido = make_shared<Lido> ();
   //auto martini = make_shared<Martini> ();
   // auto adscft = make_shared<AdSCFT> ();
@@ -143,7 +159,7 @@ void run_HQ_test(double pTmin, double pTmax, int events=30)
 
   
   // Output
-  std::string file_name="("+to_string_with_precision(pTmin,3)+", "+to_string_with_precision(pTmax,3)+")test_out.dat";
+  std::string file_name="("+to_string_with_precision(pTmin,3)+", "+to_string_with_precision(pTmax,3)+")_lido_test_out.dat";
   auto writer= make_shared<JetScapeWriterAscii> (file_name);
   jetscape->Add(writer);
 #ifdef USE_GZIP
@@ -175,100 +191,14 @@ void run_HQ_test(double pTmin, double pTmax, int events=30)
   printf ("Real time: %f seconds.\n",difftime(end,start));
 
 }
-*/
+
 
 int main(int argc, char** argv)
 {
   //vector <double> pTHatBin({ 5, 15, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 180, 220, 250});
-  //run_HQ_test(stod(argv[1]), stod(argv[2]), stod(argv[3]));
+  run_HQ_test(stod(argv[1]), stod(argv[2]), stod(argv[3]));
     
-  JetScapeLogger::Instance()->SetInfo(true);
-  JetScapeLogger::Instance()->SetDebug(false);
-  JetScapeLogger::Instance()->SetRemark(false);
-  //SetVerboseLevel (9 a lot of additional debug output ...)
-  //If you want to suppress it: use SetVerboseLevle(0) or max  SetVerboseLevle(9) or 10
-  JetScapeLogger::Instance()->SetVerboseLevel(0);
-
-  
-  Show();
-
-  //modify the init.xml file
-
-  auto jetscape = make_shared<JetScape>("./jetscape_init.xml",10);
-  jetscape->SetId("primary");
-  jetscape->SetReuseHydro (true);
-  jetscape->SetNReuseHydro (1000);
-
-  // Initial conditions and hydro
-  auto trento = make_shared<TrentoInitial>();
-  //auto pythiaGun= make_shared<PythiaGun> ();
-  auto pGun= make_shared<PGun> ();
-  auto hydro = make_shared<Brick> ();
-  jetscape->Add(trento);
-  jetscape->Add(pGun);
-  jetscape->Add(hydro);
-
-
-  // Energy loss
-  auto jlossmanager = make_shared<JetEnergyLossManager> ();
-  auto jloss = make_shared<JetEnergyLoss> ();
-
-  // auto matter = make_shared<Matter> ();
-  auto lido = make_shared<Lido> ();
-  //auto martini = make_shared<Martini> ();
-  // auto adscft = make_shared<AdSCFT> ();
-
-  // Note: if you use Matter, it MUST come first (to set virtuality)
-  //jloss->Add(matter);
-  jloss->Add(lido);
-  // jloss->Add(lbt);  // go to 3rd party and ./get_lbtTab before adding this module
-  //jloss->Add(martini);
-  // jloss->Add(adscft);  
-  jlossmanager->Add(jloss);  
-  jetscape->Add(jlossmanager);
-
-  
-  // Hadronization
-  // This helper module currently needs to be added for hadronization.
-  auto printer = make_shared<PartonPrinter> ();
-  jetscape->Add(printer);
-  //auto hadroMgr = make_shared<HadronizationManager> ();
-  //auto hadro = make_shared<Hadronization> ();
-  //auto hadroModule = make_shared<ColoredHadronization> ();
-  //hadro->Add(hadroModule);
-  //auto colorless = make_shared<ColorlessHadronization> ();
-  //hadro->Add(colorless);
-  //hadroMgr->Add(hadro);
-  //jetscape->Add(hadroMgr);
-
-  
-  // Output
-  std::string file_name="test_out.dat";
-  auto writer= make_shared<JetScapeWriterAscii> (file_name);
-  jetscape->Add(writer);
-
-  jetscape->Init();
-
-  // Run JetScape with all task/modules as specified
-  jetscape->Exec();
-
-  // For the future, cleanup is mostly already done in write and clear
-  jetscape->Finish();
-  
-  INFO_NICE<<"Finished!";
-  cout<<endl;
-
-  // Print pythia statistics
-  // pythiaGun->stat();
-
-  // // Demonstrate how to work with pythia statistics
-  // //Pythia8::Info& info = pythiaGun->info;
-  // cout << " nTried    = " << info.nTried() << endl;
-  // cout << " nSelected = " << info.nSelected()  << endl;
-  // cout << " nAccepted = " << info.nAccepted()  << endl;
-  // cout << " sigmaGen  = " <<   info.sigmaGen()  << endl;  
-  // cout << " sigmaErr  = " <<   info.sigmaErr()  << endl;
-   
+    
   return 0;
 }
 

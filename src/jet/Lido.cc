@@ -35,6 +35,8 @@ using std::ios;
 using std::ofstream;
 using std::ostream;
 
+const double QS = 1.0 ;
+
 Lido::Lido()
 {
   SetId("Lido");
@@ -54,18 +56,20 @@ void Lido::Init()
   std::string table_path = "table.h5";
   boost::property_tree::ptree config;
   double mu = 2.0;
-  double const_alphas = 0.3;
+  //double const_alphas = -1;
+  double const_alphas = 0.25;
 
-  initialize(mode, path, table_path, mu, -const_alphas, 0., 0., 0., 0., 0., 0.,
-             1., 0.75);
+  initialize(mode, path, table_path, mu, const_alphas,
+   0., 1., 1., 1., 1., 0.,
+             4., 0.);
 
   tinyxml2::XMLElement *eloss= JetScapeXML::Instance()->GetXMLRoot()->FirstChildElement("Eloss" );
   if ( !eloss )     throw std::runtime_error("Eloss not properly initialized in XML file ...");
 
   Q0=1.0;
-  hydro_Tc = 0.16;
+  hydro_Tc = 0.154;
   //martini->FirstChildElement("hydro_Tc")->QueryDoubleText(&hydro_Tc);
-  hydro_tStart = 0.0;
+  hydro_tStart = 0.6;
 
 }
 
@@ -96,7 +100,7 @@ void Lido::DoEnergyLoss(double deltaT, double Time, double Q2, vector<Parton> &p
 
     //VERBOSE(8) << "--------------------------------particle id: " << Id << " channel " << pIn[i].user_info<HQInfoBase>().hq_channel() << " mother id: " << pIn[i].user_info<HQInfoBase>().hq_mother_id();
 
-    VERBOSE(0)<<pIn[i].px()<<" "<<pIn[i].py()<<" "<<pIn[i].pz()<<" "<<pIn[i].e()<<" ";    
+    VERBOSE(0) <<"pIn (px, py, pz, e): " <<pIn[i].px()<<" "<<pIn[i].py()<<" "<<pIn[i].pz()<<" "<<pIn[i].e()<<" ";    
     pin = FourVector(pIn[i].px(), pIn[i].py(), pIn[i].pz(), pIn[i].e());
     xin = FourVector(pIn[i].x_in().x(), pIn[i].x_in().y(), pIn[i].x_in().z(), Time);
 
@@ -108,18 +112,26 @@ void Lido::DoEnergyLoss(double deltaT, double Time, double Q2, vector<Parton> &p
     double zz = xin.z() + (Time-tt)*pin.z()/pin.t();
 
     GetHydroCellSignal(Time, xx, yy, zz, check_fluid_info_ptr);
-    //VERBOSE(0)<<"Inputs: "<<Time<<" "<<xx<<" "<< yy<<" "<< zz;
-    //VERBOSE(0) << "Temperature (Signal) = "
-    //           << check_fluid_info_ptr->temperature << " " << check_fluid_info_ptr->vx << " " << check_fluid_info_ptr->vy << " " << check_fluid_info_ptr->vz;
+    VERBOSE(8)<<"Space-time (x, y, z, t): "<<xx<<" "<< yy<<" "<< zz<< " "<<Time;
+    VERBOSE(8) << "T, vx, vy, vz (hydro): "
+               << check_fluid_info_ptr->temperature << " " << check_fluid_info_ptr->vx << " " << check_fluid_info_ptr->vy << " " << check_fluid_info_ptr->vz;
 
     vx = check_fluid_info_ptr->vx;
     vy = check_fluid_info_ptr->vy;
     vz = check_fluid_info_ptr->vz;
     T = check_fluid_info_ptr->temperature;
 
-    //if (pIn[i].t() > Q0*Q0 + 0.00001 || Time <=hydro_tStart || T < hydro_Tc) continue;
-    if (pIn[i].t() > Q0*Q0 + 0.0000001) continue;
-    TakeResponsibilityFor ( pIn[i] ); // Generate error if another module already has responsibility.
+    //if (pIn[i].t() > Q0*Q0 + rounding_error || ((!in_vac) && now_temp<=T0 && pIn[i].t() > QS*QS + rounding_error)) continue;
+
+    if (pIn[i].t() > Q0*Q0 + rounding_error || Time <=hydro_tStart || T < hydro_Tc) continue;
+    //if (pIn[i].t() > Q0*Q0 + rounding_error) continue;
+    //if (pIn[i].GetControlled()) continue;
+    else
+    {
+        TakeResponsibilityFor ( pIn[i] ); // Generate error if another module already has responsibility.
+        VERBOSE(8) << "Lido takes responsibility!";
+    }
+    
 
     std::vector<fourvec> FS;
     std::vector<fourvec> FSG;
@@ -138,13 +150,16 @@ void Lido::DoEnergyLoss(double deltaT, double Time, double Q2, vector<Parton> &p
       Lido_particle.mfp0 = pIn[i].user_info<LidoParticleInfo>().mfp0_;
       Lido_particle.Tf = pIn[i].user_info<LidoParticleInfo>().Tf_;
       Lido_particle.vcell = pIn[i].user_info<LidoParticleInfo>().vcell_;
+      Lido_particle.mother_p = pIn[i].user_info<LidoParticleInfo>().mother_p_;
     }
     else
     {
+      //first go into Lido
       vector<particle> rad;
       Lido_particle.radlist = rad;
       Lido_particle.x0 = Lido_particle.x;
       Lido_particle.p0 = Lido_particle.p;
+      //Lido_particle.mother_p = Lido_particle.p;
       Lido_particle.Tf=0.;
       Lido_particle.vcell.resize(3);
 			Lido_particle.vcell[0] = vx; 
@@ -154,17 +169,20 @@ void Lido::DoEnergyLoss(double deltaT, double Time, double Q2, vector<Parton> &p
 			Lido_particle.is_virtual = false;
     }
 
-    //JSINFO<<" position0: "<<Lido_particle.x0.t()<<" position: "<<Lido_particle.x.t()<<" momentum0: "<<Lido_particle.p0.t()<<" momentum: "<<Lido_particle.p.t();
-    //JSINFO<<" T0: "<<Lido_particle.T0<<" "<<Lido_particle.mfp0<<" "<<Lido_particle.Tf;
-    //JSINFO<<" vcell:" <<Lido_particle.vcell[0]<<" "<<Lido_particle.vcell[1]<<" "<<Lido_particle.vcell[2];
-    //JSINFO<<" radlist #:" <<Lido_particle.radlist.size();
+    //VERBOSE(0)<<" position0: "<<Lido_particle.x0.t()<<" "<<Lido_particle.x0.x()<<" "<<Lido_particle.x0.y() <<" "<<Lido_particle.x0.z();
+    //VERBOSE(0)<<" position: "<<Lido_particle.x.t()<<" "<<Lido_particle.x.x()<<" "<<Lido_particle.x.y() <<" "<<Lido_particle.x.z();
+    //VERBOSE(0)<<" momentum0: "<<Lido_particle.p0.t()<<" "<<Lido_particle.p0.x()<<" "<<Lido_particle.p0.y() <<" "<<Lido_particle.p0.z();
+    //VERBOSE(0)<<" momentum: "<<Lido_particle.p.t()<<" "<<Lido_particle.p.x()<<" "<<Lido_particle.p.y() <<" "<<Lido_particle.p.z();
+    //" position: "<<Lido_particle.x.t()<<" momentum0: "<<Lido_particle.p0.t()<<" momentum: "<<Lido_particle.p.t();
+   // VERBOSE(0)<<" T0: "<<Lido_particle.T0<<" "<<Lido_particle.mfp0<<" "<<Lido_particle.Tf;
+    //VERBOSE(0)<<" vcell:" <<Lido_particle.vcell[0]<<" "<<Lido_particle.vcell[1]<<" "<<Lido_particle.vcell[2];
+    //VERBOSE(0)<<" radlist #:" <<Lido_particle.radlist.size();
 
     std::vector<particle> Lido_pOut;
     int channel = update_particle_momentum_Lido(deltaT * fmc_to_GeV_m1, T, {vx, vy, vz}, Lido_particle, Lido_pOut);
     if(channel>1)
     {
-      JSINFO << "channel: " <<channel; 
-      
+    VERBOSE(0)<< BOLDYELLOW << "Lido channel (other than 1): " <<channel; 
     } 
 
     for (int j = 0; j < Lido_pOut.size(); j++)
@@ -173,13 +191,10 @@ void Lido::DoEnergyLoss(double deltaT, double Time, double Q2, vector<Parton> &p
       FourVector x = FourVector(par.x.x()/fmc_to_GeV_m1, par.x.y()/fmc_to_GeV_m1, par.x.z()/fmc_to_GeV_m1, par.x.t()/fmc_to_GeV_m1);
       FourVector p = FourVector(par.p.x(), par.p.y(), par.p.z(), par.p.t());
       pOut.push_back(Parton(0, par.pid, 0, p, x));
-      pOut[pOut.size()-1].set_user_info(new LidoParticleInfo(par.T0, par.mfp0, par.Tf, 
-      par.x0, par.p0, par.vcell, par.radlist));
+      pOut[pOut.size()-1].set_user_info(new LidoParticleInfo(par.T0, par.mfp0, par.Tf, par.x0, par.p0, par.vcell, par.radlist, par.mother_p));
       pOut[pOut.size()-1].set_form_time(0.);
     }
   }
-
-  //JSINFO <<"pOut #: "<<pOut.size(); 
 
   return;   
 }

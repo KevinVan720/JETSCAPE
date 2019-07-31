@@ -255,8 +255,8 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>&
   std::unique_ptr<FluidCellInfo> check_fluid_info_ptr;
 
 
- VERBOSE(8) << MAGENTA << " the time in fm is " << time << " The time in GeV-1 is " << Time ;
- VERBOSE(8) << MAGENTA  << "pid = " << pIn[0].pid() << " E = " << pIn[0].e() << " px = " << pIn[0].p(1) << " py = " << pIn[0].p(2) << "  pz = " << pIn[0].p(3) << " virtuality = " << pIn[0].t() << " form_time in fm = " << pIn[0].form_time() << " split time = " << pIn[0].form_time() + pIn[0].x_in().t();
+  VERBOSE(8) << MAGENTA << " the time in fm is " << time << " The time in GeV-1 is " << Time ;
+  VERBOSE(8) << MAGENTA  << "pid = " << pIn[0].pid() << " E = " << pIn[0].e() << " px = " << pIn[0].p(1) << " py = " << pIn[0].p(2) << "  pz = " << pIn[0].p(3) << " virtuality = " << pIn[0].t() << " form_time in fm = " << pIn[0].form_time() << " split time = " << pIn[0].form_time() + pIn[0].x_in().t();
   JSDEBUG << " color = " << pIn[0].color() << " anti-color = " << pIn[0].anti_color();
     
     unsigned int ShowerMaxColor = pIn[0].max_color();
@@ -336,6 +336,9 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>&
           xStart[j] = pIn[i].x_in().comp(j) ;
       }
 
+       VERBOSE(8)<< BOLDYELLOW <<xStart[0]<< " " << xStart[1]<< " " <<xStart[2]<< " "<<xStart[3]<< " ";
+       VERBOSE(8)<< BOLDYELLOW << velocity[1] <<" "<< velocity[2] <<" " << velocity[3];
+
       // SC: read in hydro
       initR0 = xStart[0];
       initRx = xStart[1];
@@ -350,7 +353,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>&
       
       initEner = pIn[i].e(); // initial Energy of parton
       if(!in_vac){
-	 if(GetJetSignalConnected()) length = fillQhatTab();
+	    if(GetJetSignalConnected()) length = fillQhatTab();
          else{
            JSWARN << "Couldn't find a hydro module attached!";
            throw std::runtime_error ("Please attach a hydro module or set in_vac to 1 in the XML file");
@@ -358,6 +361,8 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>&
       }
       if(brick_med) length = brick_length*fmToGeVinv; /// length in GeV-1 will have to changed for hydro
       //if(brick_med) length = 5.0*fmToGeVinv; /// length in GeV-1 will have to changed for hydro
+
+      VERBOSE(8)<< BOLDYELLOW <<xStart[0]<< " initRdotV = " << initRdotV;
 
       // SC
       zeta = ( ( xStart[0] + initRdotV )/std::sqrt(2) )*fmToGeVinv;
@@ -376,6 +381,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>&
          GetHydroCellSignal(now_R0, now_Rx, now_Ry, now_Rz, check_fluid_info_ptr);
          //VERBOSE(8)<<MAGENTA<<"Temperature from medium = "<<check_fluid_info_ptr->temperature;
          now_temp = check_fluid_info_ptr->temperature;
+         //JSINFO <<MAGENTA<<"Temperature from medium = "<<check_fluid_info_ptr->temperature;
       }
       else
       {
@@ -619,7 +625,7 @@ void Matter::DoEnergyLoss(double deltaT, double time, double Q2, vector<Parton>&
                   recordE0=pc0[0];
 
                   GetHydroCellSignal(el_time, el_rx, el_ry, el_rz, check_fluid_info_ptr);
-               	  VERBOSE(8)<<MAGENTA<<"Temperature from medium = "<<check_fluid_info_ptr->temperature;
+               	  VERBOSE(0)<<MAGENTA<<"Temperature from medium = "<<check_fluid_info_ptr->temperature;
                	 	
                	  tempLoc = check_fluid_info_ptr->temperature;
                	  sdLoc = check_fluid_info_ptr->entropy_density;

@@ -36,10 +36,9 @@ using namespace Jetscape;
 // You could overload here and then simply use ofstream << p;
 // ostream & operator<<(ostream & ostr, const fjcore::PseudoJet & jet);
 
-
 // -------------------------------------
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 
   // JetScapeLogger::Instance()->SetInfo(false);
@@ -48,30 +47,30 @@ int main(int argc, char** argv)
   // //SetVerboseLevel (9 a lot of additional debug output ...)
   // //If you want to suppress it: use SetVerboseLevle(0) or max  SetVerboseLevel(9) or 10
   JetScapeLogger::Instance()->SetVerboseLevel(0);
-  
-  auto reader=make_shared<JetScapeReaderAscii>("test_out.dat");
-  std::ofstream dist_output ("JetscapeFinalStatePartons.txt"); //Format is SN, PID, E, Px, Py, Pz, Eta, Phi
-  
-  JSINFO <<"reader ready";
 
+  auto reader = make_shared<JetScapeReaderAscii>("test_out.dat");
+  std::ofstream dist_output("JetscapeFinalStatePartons.txt"); //Format is SN, PID, E, Px, Py, Pz, Eta, Phi
+  double E = 0.;
+  int count = 0;
+
+  JSINFO << "reader ready";
   while (!reader->Finished())
+  {
+    reader->Next();
+
+    // cout<<"Analyze current event: "<<reader->GetCurrentEvent()<<endl;
+    auto mShowers = reader->GetPartonShowers();
+    for (int i = 0; i < mShowers.size(); i++)
     {
-      reader->Next();
-      double E=0.;
-      int count=0;
-      // cout<<"Analyze current event: "<<reader->GetCurrentEvent()<<endl;
-      auto mShowers=reader->GetPartonShowers();     
-			for (int i = 0; i < mShowers.size(); i++)
-			{
-				std::vector<fjcore::PseudoJet> temp = mShowers[i]->GetFinalPartonsForFastJet();
-				for (int j = 0; j < temp.size(); j++)
-				{
-					E+= temp[j].e();
-          count++;
-				}
-			}
-     JSINFO<<"avergae E: "<<E/count;
+      std::vector<fjcore::PseudoJet> temp = mShowers[i]->GetFinalPartonsForFastJet();
+      for (int j = 0; j < temp.size(); j++)
+      {
+        E += temp[j].e();
+        count++;
+      }
     }
-  
-  reader->Close(); 
+  }
+
+  JSINFO << "final avergae E: " << E / count << " final total E: " << E/100 << ", #= " << count;
+  reader->Close();
 }

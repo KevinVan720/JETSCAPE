@@ -15,6 +15,7 @@
 #include <fstream>
 #include <math.h>
 #include "JetEnergyLossModule.h"
+#include "JetScapeConstants.h"
 #include "workflow.h"
 
 using namespace Jetscape;
@@ -26,10 +27,11 @@ class LidoParticleInfo: public fjcore::PseudoJet::UserInfoBase
     double T0_, mfp0_, Tf_; // production temperature, local mfp
 	  fourvec x0_; // production location
 	  fourvec p0_; // production momentum
+	  fourvec mother_p_;
     std::vector<double> vcell_;
     
-    LidoParticleInfo(double T0, double mfp0, double Tf, fourvec x0, fourvec p0, std::vector<double> vcell, vector<particle> radlist) 
-     : T0_(T0), mfp0_(mfp0), Tf_(Tf), x0_(x0), p0_(p0), vcell_(vcell), radlist_(radlist) {};
+  LidoParticleInfo(double T0, double mfp0, double Tf, fourvec x0, fourvec p0, std::vector<double> vcell, vector<particle> radlist, fourvec mother_p) 
+    : T0_(T0), mfp0_(mfp0), Tf_(Tf), x0_(x0), p0_(p0), vcell_(vcell), radlist_(radlist), mother_p_(mother_p) {};
     std::vector<particle> radlist() const {return radlist_;}
   };
 

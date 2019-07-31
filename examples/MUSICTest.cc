@@ -39,6 +39,7 @@
 #include "TrentoInitial.h"
 #include "NullPreDynamics.h"
 #include "PGun.h"
+#include "PythiaGun.h"
 #include "HadronizationManager.h"
 #include "Hadronization.h"
 #include "ColoredHadronization.h"
@@ -84,11 +85,12 @@ int main(int argc, char** argv)
   // Initial conditions and hydro
   auto trento = make_shared<TrentoInitial>();
   auto null_predynamics = make_shared<NullPreDynamics> ();
-  auto pGun= make_shared<PGun> ();
+  auto pythiaGun= make_shared<PythiaGun> ();
+  //auto pGun= make_shared<PGun> ();
   auto hydro = make_shared<MpiMusic> ();
   jetscape->Add(trento);
   jetscape->Add(null_predynamics);
-  jetscape->Add(pGun);
+  jetscape->Add(pythiaGun);
   jetscape->Add(hydro);
 
   // surface sampler
